@@ -69,40 +69,44 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   handleAddressChange = (event: StripeAddressElementChangeEvent) => {
-    this.completionStatus.update(state => {
-      state.address = event.complete;
-      return state;
-    })
-  }
+  this.completionStatus.set({
+    ...this.completionStatus(),
+    address: event.complete
+  });
+}
 
   handlePaymentChange = (event: StripePaymentElementChangeEvent) => {
-    this.completionStatus.update(state => {
-      state.card = event.complete;
-      return state;
-    })
+    this.completionStatus.set({
+      ...this.completionStatus(),
+      card: event.complete
+    });
   }
 
-  handleDeliveryChange = (event: boolean) => {
-    this.completionStatus.update(state => {
-      state.delivery = event;
-      return state;
-    })
+  handleDeliveryChange(event: boolean) {
+    this.completionStatus.set({
+      ...this.completionStatus(),
+      delivery: event
+    });
   }
 
   async getConfirmationToken() {
-    try {
-      if (Object.values(this.completionStatus()).every(status => status === true)) {
-        const result = await this.stripeService.createConfirmationToken();
-        if (result.error) throw new Error(result.error.message);
-        this.confirmationToken = result.confirmationToken;
-        console.log('Confirmation Token:', this.confirmationToken);
-      }
+  try {
+    const status = this.completionStatus();
+    if (Object.values(status).every(s => s === true)) {
+      const result = await this.stripeService.createConfirmationToken();
+      if (result.error) throw new Error(result.error.message);
+      this.completionStatus.set({
+        ...status,
+      });
+      this.confirmationToken = result.confirmationToken;
+      console.log('Confirmation Token:', this.confirmationToken);
     }
-    catch(error: any) {
-      this.snackBar.error(error.message);
-    }
-    
   }
+  catch (error: any) {
+    this.snackBar.error(error.message);
+  }
+}
+
 
   async onStepChange(event: StepperSelectionEvent) {
     if (event.selectedIndex === 1) {
